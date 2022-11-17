@@ -6,12 +6,24 @@ import {
   DashboardOutlined,
   VideoCameraOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, Dropdown, message } from 'antd';
-import React, { useState } from 'react';
+import { Layout, Menu, Dropdown, message, Breadcrumb } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 const { Header, Sider, Content } = Layout;
 
-const AppMenu = [
+type IMenuItem = {
+  key: string;
+  label: string;
+  icon?: JSX.Element;
+  children?: IMenuItem[];
+};
+
+type TBreadcrumbItem = {
+  label: string;
+  key: React.Key;
+};
+
+const AppMenu: IMenuItem[] = [
   {
     key: '/admin/dashboard',
     icon: <DashboardOutlined />,
@@ -54,13 +66,56 @@ const AppMenu = [
   },
 ];
 
+/** 找到默认打开的菜单项 */
+const findOpenKeys = (menus: IMenuItem[], key: string) => {
+  let result: string[] = [];
+  const findInfo = (arr: IMenuItem[]) => {
+    for (const item of arr) {
+      if (key.includes(item.key)) {
+        result.push(item.key);
+        if (item.children) {
+          findInfo(item.children);
+        }
+      }
+    }
+  };
+  findInfo(menus);
+  return result;
+};
+
+const findDeepPath = (menus: IMenuItem[], key: string) => {
+  let result: any[] = [];
+
+  const findInfo = (arr: IMenuItem[]) => {
+    // 数据拍平
+    for (const item of arr) {
+      const { children, ...info } = item;
+      result.push(info);
+      if (children) {
+        findInfo(children);
+      }
+    }
+  };
+  findInfo(menus);
+  // 过滤出所有key值被包含的数据
+  let tempData = result.filter((item) => key.includes(item.key));
+  if (tempData.length > 0) {
+    return [{ label: '首页', key: 'admin/dashboard' }, ...tempData];
+  }
+  return [];
+};
+
 const AppLayout = ({ children }: any) => {
-  const location = useLocation();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   // 默认展开的 submenu
-  const defaultOpenKey = location.pathname.split('/').slice(0, -1).join('/');
+  const defaultOpenKeys = findOpenKeys(AppMenu, pathname);
+  const [breadcrumbItems, setBreadCrumbItems] = useState<TBreadcrumbItem[]>([]);
 
+  useEffect(() => {
+    setBreadCrumbItems(findDeepPath(AppMenu, pathname));
+  }, [pathname]);
   const handleClick = ({ key }: { key: string }) => {
     if (key === 'user-center') {
       message.info('暂未开通');
@@ -76,8 +131,8 @@ const AppLayout = ({ children }: any) => {
           theme="light"
           onClick={handleClick}
           mode="inline"
-          defaultOpenKeys={[defaultOpenKey]}
-          defaultSelectedKeys={[location.pathname]}
+          defaultOpenKeys={defaultOpenKeys}
+          defaultSelectedKeys={defaultOpenKeys}
           items={AppMenu}
         />
       </Sider>
@@ -108,6 +163,11 @@ const AppLayout = ({ children }: any) => {
             minHeight: 280,
           }}
         >
+          <Breadcrumb>
+            {breadcrumbItems.map((item) => (
+              <Breadcrumb.Item key={item.key}>{item.label}</Breadcrumb.Item>
+            ))}
+          </Breadcrumb>
           {children}
         </Content>
       </Layout>
