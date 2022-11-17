@@ -1,0 +1,32 @@
+.app-layout  {
+  .app-title {
+    font-size: 18px;
+  }
+  .app-user {
+    float: right;
+    margin-right: 16px;
+  }
+  .trigger {
+    cursor: pointer;
+    padding: 0 24px;
+    font-size: 18px;
+    line-height: 64px;
+    transition: color 0.3s;
+    &:hover {
+      color: #1890ff;
+    }
+  }
+  .logo {
+    height: 32px;
+    margin: 16px;
+    background: rgba(0, 0, 0, .3);
+  }
+}
+
+.site-layout .site-layout-background {
+  background: #fff;
+}
+
+.app-sider {
+  background-color: #fff;
+}
